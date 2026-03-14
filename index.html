@@ -655,63 +655,65 @@
     addLog('valid', `<strong>${cfg.label}</strong> &mdash; ${p} PSI &nbsp;·&nbsp; ${f} LPM &nbsp;<span style="opacity:.5;font-size:.7rem">seq ${sequence}</span>`);
   }
 
-  /* ── Attack sequence ────────────────────────────────────── */
+  /* ── Attack definitions ─────────────────────────────────── */
   const ATTACKS = [
-    {
-      type:   'Message Tampering',
-      source: 'attack-simulator',
-      desc:   'Fake HMAC — contents altered in transit',
-      zone:   'main',
-    },
-    {
-      type:   'Replay Attack',
-      source: 'attack-simulator',
-      desc:   'Duplicate sequence number — stale message blocked',
-      zone:   'pool',
-    },
-    {
-      type:   'Stale Message',
-      source: 'attack-simulator',
-      desc:   'Timestamp outside 30s freshness window',
-      zone:   'kitchen',
-    },
+    { type: 'Message Tampering', desc: 'Fake HMAC — contents altered in transit' },
+    { type: 'Replay Attack',     desc: 'Duplicate sequence number — stale message blocked' },
+    { type: 'Stale Message',     desc: 'Timestamp outside 30s freshness window' },
+    { type: 'Injection Attack',  desc: 'Unauthorized payload — device ID spoofed' },
+    { type: 'MITM Attempt',      desc: 'Certificate mismatch — mTLS handshake rejected' },
   ];
-  let attackIndex = 0;
+
+  const SOURCES = [
+    'attack-simulator',
+    'rogue-device-042',
+    'unknown-client',
+    'spoofed-001',
+    'external-probe',
+  ];
+
+  function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
   function runAttack() {
-    const atk = ATTACKS[attackIndex % ATTACKS.length];
-    attackIndex++;
+    // Fully random: attack type, source, and zone
+    const atk    = pickRandom(ATTACKS);
+    const source = pickRandom(SOURCES);
+    const zone   = pickRandom(zoneKeys);
 
-    shake(atk.zone);
-    setAlert(atk.type, atk.source);
+    shake(zone);
+    setAlert(atk.type, source);
     bumpBlocked();
-    addLog('blocked', `<strong>${esc(atk.type)}</strong> from ${esc(atk.source)} &mdash; <span style="opacity:.65">${esc(atk.desc)}</span>`);
+    addLog('blocked', `<strong>${esc(atk.type)}</strong> from ${esc(source)} &mdash; <span style="opacity:.65">${esc(atk.desc)}</span>`);
 
-    // Fire a second attack 4 seconds later for drama
-    setTimeout(() => {
-      const atk2 = ATTACKS[attackIndex % ATTACKS.length];
-      attackIndex++;
-      shake(atk2.zone);
-      setAlert(atk2.type, atk2.source);
-      bumpBlocked();
-      addLog('blocked', `<strong>${esc(atk2.type)}</strong> from ${esc(atk2.source)} &mdash; <span style="opacity:.65">${esc(atk2.desc)}</span>`);
-    }, 4000);
+    // Sometimes fire a second attack 2-5 seconds later (about 40% of the time)
+    if (Math.random() < 0.4) {
+      setTimeout(() => {
+        const atk2   = pickRandom(ATTACKS);
+        const source2 = pickRandom(SOURCES);
+        const zone2  = pickRandom(zoneKeys);
+        shake(zone2);
+        setAlert(atk2.type, source2);
+        bumpBlocked();
+        addLog('blocked', `<strong>${esc(atk2.type)}</strong> from ${esc(source2)} &mdash; <span style="opacity:.65">${esc(atk2.desc)}</span>`);
+      }, randInt(2000, 5000));
+    }
+
+    // Schedule next attack at a random interval between 8-45 seconds
+    setTimeout(runAttack, randInt(8000, 45000));
   }
 
   /* ── Boot sequence ──────────────────────────────────────── */
-  // Stagger the first readings so all 3 zones come online quickly
+  // Stagger first readings so all 3 zones come online fast
   setTimeout(() => sensorTick(), 800);
   setTimeout(() => sensorTick(), 1800);
   setTimeout(() => sensorTick(), 2800);
 
-  // Then settle into normal rhythm
+  // Normal sensor rhythm
   setInterval(sensorTick, SENSOR_TICK);
 
-  // Attack cycle — first one at 20s, then every 45s
-  setTimeout(() => {
-    runAttack();
-    setInterval(runAttack, ATTACK_EVERY);
-  }, 20000);
+  // First attack fires randomly between 5-10 seconds — fast enough to see immediately
+  setTimeout(runAttack, randInt(5000, 10000));
 </script>
 </body>
 </html>
