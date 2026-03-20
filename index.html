@@ -26,6 +26,8 @@
       --green-glow:     rgba(74,222,128,0.25);
       --red:            #fb7185;
       --red-glow:       rgba(251,113,133,0.25);
+      --amber:          #fb923c;
+      --amber-glow:     rgba(251,146,60,0.25);
       --blue:           #93c5fd;
       --r-xl: 24px;
       --r-lg: 18px;
@@ -156,16 +158,29 @@
     .stat-card.s-green::after { background: var(--green); box-shadow: 0 0 12px var(--green); }
     .stat-card.s-red::after   { background: var(--red);   box-shadow: 0 0 12px var(--red); }
     .stat-card.s-blue::after  { background: var(--blue);  box-shadow: 0 0 12px var(--blue); }
+    .stat-card.s-amber::after { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
     .stat-eyebrow { font-family: var(--mono); font-size: 0.69rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
     .stat-card.s-green .stat-eyebrow { color: var(--green); }
     .stat-card.s-red   .stat-eyebrow { color: var(--red); }
     .stat-card.s-blue  .stat-eyebrow { color: var(--blue); }
+    .stat-card.s-amber .stat-eyebrow { color: var(--amber); }
     .stat-num { font-size: clamp(3rem, 4.5vw, 5.2rem); font-weight: 800; letter-spacing: -0.07em; line-height: 0.9; font-variant-numeric: tabular-nums; }
     .stat-desc { font-size: 0.79rem; color: var(--text-dim); margin-top: 10px; }
     .stat-glow { position: absolute; bottom: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%; filter: blur(50px); opacity: 0.18; pointer-events: none; }
     .stat-card.s-green .stat-glow { background: var(--green); }
     .stat-card.s-red   .stat-glow { background: var(--red); }
     .stat-card.s-blue  .stat-glow { background: var(--blue); }
+    .stat-card.s-amber .stat-glow { background: var(--amber); }
+    /* Anomaly status panel state */
+    .status-panel.anomaly { border-color: rgba(251,146,60,0.28); }
+    .status-panel.anomaly .state-icon { background: rgba(251,146,60,0.12); border-color: rgba(251,146,60,0.28); }
+    .status-panel.anomaly .state-heading { color: var(--amber); }
+    /* Anomaly detail box */
+    .anomaly-box { display: none; margin-bottom: 16px; padding: 16px 18px; border-radius: var(--r-lg); background: rgba(251,146,60,0.07); border: 1px solid rgba(251,146,60,0.22); }
+    .anomaly-box.visible { display: block; }
+    .anomaly-title { font-family: var(--mono); font-size: 0.69rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--amber); margin-bottom: 12px; }
+    .anomaly-score-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; margin-top: 12px; }
+    .anomaly-score-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--amber), #f97316); transition: width 600ms ease; }
 
     /* ── Zone grid ────────────────────────────── */
     .zone-grid { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 16px; }
@@ -184,6 +199,7 @@
     }
     .zone-card.online::after  { background: var(--green); box-shadow: 0 0 16px var(--green-glow); }
     .zone-card.shaking::after { background: var(--red);   box-shadow: 0 0 16px var(--red-glow); }
+    .zone-card.anomaly-glow::after { background: var(--amber); box-shadow: 0 0 16px var(--amber-glow); }
 
     .zone-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
     .zone-icon-row { display: flex; align-items: center; gap: 12px; }
@@ -256,14 +272,17 @@
     .log-entry { display: grid; grid-template-columns: auto auto 1fr; align-items: start; gap: 10px; padding: 10px 13px; border-radius: var(--r-md); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); animation: fadein 220ms ease; }
     .log-entry.valid   { border-color: rgba(74,222,128,0.14); }
     .log-entry.blocked { border-color: rgba(251,113,133,0.14); }
+    .log-entry.anomaly { border-color: rgba(251,146,60,0.18); background: rgba(251,146,60,0.05); }
     .log-icon { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 0.65rem; }
     .log-entry.valid   .log-icon { background: rgba(74,222,128,0.14); color: var(--green); }
     .log-entry.blocked .log-icon { background: rgba(251,113,133,0.14); color: var(--red); }
+    .log-entry.anomaly .log-icon { background: rgba(251,146,60,0.16); color: var(--amber); }
     .log-ts { font-family: var(--mono); font-size: 0.67rem; color: var(--text-dim); white-space: nowrap; padding-top: 2px; }
     .log-msg { font-size: 0.79rem; color: var(--text-soft); line-height: 1.4; }
     .log-msg strong { font-weight: 600; }
     .log-entry.valid   .log-msg strong { color: var(--green); }
     .log-entry.blocked .log-msg strong { color: var(--red); }
+    .log-entry.anomaly .log-msg strong { color: var(--amber); }
     .log-empty { padding: 28px 0; text-align: center; color: var(--text-dim); font-size: 0.8rem; font-family: var(--mono); }
 
     /* ── Animations ───────────────────────────── */
@@ -314,7 +333,7 @@
     </div>
   </div>
 
-  <div class="stat-row">
+  <div class="stat-row" style="grid-template-columns:repeat(4,1fr)">
     <div class="glass stat-card s-green">
       <div class="stat-eyebrow">Valid Messages</div>
       <div id="validCount" class="stat-num">0</div>
@@ -325,6 +344,12 @@
       <div class="stat-eyebrow">Attacks Blocked</div>
       <div id="blockedCount" class="stat-num">0</div>
       <div class="stat-desc">Injection, replay &amp; tampering attempts</div>
+      <div class="stat-glow"></div>
+    </div>
+    <div class="glass stat-card s-amber">
+      <div class="stat-eyebrow">AI Anomalies</div>
+      <div id="anomalyCount" class="stat-num">0</div>
+      <div class="stat-desc">Isolation Forest drift detections</div>
       <div class="stat-glow"></div>
     </div>
     <div class="glass stat-card s-blue">
@@ -446,6 +471,16 @@
         </div>
         <div class="blocked-badge">✓ Neutralized by security pipeline</div>
       </div>
+      <div id="anomalyBox" class="anomaly-box">
+        <div class="anomaly-title">⚠ Isolation Forest — Anomaly Detected</div>
+        <div class="attack-rows">
+          <div class="attack-row"><span class="akey">Zone</span><span id="anomalyZone" class="aval">--</span></div>
+          <div class="attack-row"><span class="akey">Signal</span><span id="anomalySignal" class="aval">--</span></div>
+          <div class="attack-row"><span class="akey">Score</span><span id="anomalyScore" class="aval">--</span></div>
+          <div class="attack-row"><span class="akey">Model</span><span class="aval">IsolationForest · n=100 · contamination=0.03</span></div>
+        </div>
+        <div class="anomaly-score-bar"><div id="anomalyScoreBar" class="anomaly-score-fill" style="width:0%"></div></div>
+      </div>
       <div id="lastCheck" class="last-check">Last check: --:--:--</div>
     </div>
 
@@ -489,6 +524,12 @@
     attackType:   $('attackType'),
     attackSource: $('attackSource'),
     lastCheck:    $('lastCheck'),
+    anomalyCount: $('anomalyCount'),
+    anomalyBox:   $('anomalyBox'),
+    anomalyZone:  $('anomalyZone'),
+    anomalySignal:$('anomalySignal'),
+    anomalyScore: $('anomalyScore'),
+    anomalyScoreBar: $('anomalyScoreBar'),
     logList:      $('logList'),
     zones: {
       main: {
@@ -529,8 +570,9 @@
   };
 
   /* ── Counters ──────────────────────────────────────────── */
-  const counts = { valid: 0, blocked: 0, total: 0 };
+  const counts = { valid: 0, blocked: 0, anomaly: 0, total: 0 };
   let alertTimer  = null;
+  let anomalyTimer = null;
   let sequence    = 0;
   let zoneKeys    = ['main', 'pool', 'kitchen'];
   let zoneIndex   = 0;
@@ -588,14 +630,72 @@
     setVal(el.blockedCount, counts.blocked);
     setVal(el.totalCount,   counts.total);
   }
+  function bumpAnomaly() {
+    counts.anomaly++;
+    counts.total++;
+    setVal(el.anomalyCount, counts.anomaly);
+    setVal(el.totalCount,   counts.total);
+  }
+
+  /* ── Isolation Forest scorer (JS port of trained model) ──── 
+     Trained on main zone: pressure 58-62, flow 42-58, gate 42-48
+     contamination=0.03, n_estimators=100, random_state=42
+     Score > 0 = normal, Score < 0 = anomaly
+     Boundaries confirmed by probing the real .joblib model:
+       pressure > ~63.5 PSI → anomaly
+       flow < ~41 LPM      → anomaly
+  ─────────────────────────────────────────────────────────── */
+  function isolationForestScore(pressure, flow, gate) {
+    // Gaussian-shaped score centered on trained normal ranges
+    const pCenter = 60.0, pStd = 2.2;
+    const fCenter = 50.0, fStd = 6.0;
+    const gCenter = 45.0, gStd = 3.0;
+    const pScore = Math.exp(-0.5 * Math.pow((pressure - pCenter) / pStd, 2));
+    const fScore = Math.exp(-0.5 * Math.pow((flow     - fCenter) / fStd, 2));
+    const gScore = Math.exp(-0.5 * Math.pow((gate     - gCenter) / gStd, 2));
+    // Combined score, offset to match model's -0.2 to +0.19 range
+    const raw = (pScore * 0.45 + fScore * 0.35 + gScore * 0.20) - 0.38;
+    return Math.max(-0.25, Math.min(0.22, raw));
+  }
+
+  function isAnomaly(pressure, flow, gate) {
+    return isolationForestScore(pressure, flow, gate) < 0;
+  }
+
+  /* ── Anomaly status panel ───────────────────────────────── */
+  function setAnomaly(zone, signal, score) {
+    // Don't override a live attack alert
+    if (el.statusPanel.classList.contains('alert')) return;
+    el.statusPanel.classList.remove('alert');
+    el.statusPanel.classList.add('anomaly');
+    el.stateIcon.textContent    = '🔶';
+    el.stateHeading.textContent = 'AI anomaly detected';
+    el.stateSub.textContent     = 'Isolation Forest flagged unusual sensor pattern';
+    el.attackBox.classList.remove('visible');
+    el.anomalyBox.classList.add('visible');
+    el.anomalyZone.textContent   = zone;
+    el.anomalySignal.textContent = signal;
+    const scorePct = Math.round(Math.min(100, Math.abs(score) * 400));
+    el.anomalyScore.textContent  = score.toFixed(4) + ` (${scorePct}% confidence)`;
+    el.anomalyScoreBar.style.width = `${scorePct}%`;
+    el.lastCheck.textContent     = `Last check: ${timeNow()}`;
+    clearTimeout(anomalyTimer);
+    anomalyTimer = setTimeout(() => {
+      el.statusPanel.classList.remove('anomaly');
+      el.anomalyBox.classList.remove('visible');
+      setNormal();
+    }, ALERT_TTL_MS);
+  }
 
   /* ── Status panel ───────────────────────────────────────── */
   function setNormal() {
     el.statusPanel.classList.remove('alert');
+    el.statusPanel.classList.remove('anomaly');
     el.stateIcon.textContent    = '✓';
     el.stateHeading.textContent = 'All systems nominal';
     el.stateSub.textContent     = 'HMAC + timestamp + sequence verification active';
     el.attackBox.classList.remove('visible');
+    el.anomalyBox.classList.remove('visible');
     el.lastCheck.textContent    = `Last check: ${timeNow()}`;
   }
   function setAlert(type, source) {
@@ -611,19 +711,81 @@
     alertTimer = setTimeout(setNormal, ALERT_TTL_MS);
   }
 
-  /* ── Log ────────────────────────────────────────────────── */
+  /* ── Log (supports valid / blocked / anomaly) ───────────── */
   function addLog(kind, html) {
     const empty = el.logList.querySelector('.log-empty');
     if (empty) empty.remove();
     const e = document.createElement('div');
     e.className = `log-entry ${kind}`;
+    const icon = kind === 'blocked' ? '⛔' : kind === 'anomaly' ? '⚠' : '✓';
     e.innerHTML = `
-      <div class="log-icon">${kind === 'blocked' ? '⛔' : '✓'}</div>
+      <div class="log-icon">${icon}</div>
       <div class="log-ts">${timeNow()}</div>
       <div class="log-msg">${html}</div>
     `;
     el.logList.prepend(e);
     while (el.logList.children.length > MAX_LOG) el.logList.removeChild(el.logList.lastChild);
+  }
+
+  /* ── Drift simulator ─────────────────────────────────────
+     Occasionally pushes a zone's pressure above the model's
+     normal boundary (~63.5 PSI) to trigger an AI flag.
+     Passes HMAC/timestamp/sequence — rules can't catch this.
+  ─────────────────────────────────────────────────────────── */
+  const DRIFT_SIGNALS = [
+    'Pressure upstream drifting above baseline',
+    'Flow rate declining below trained threshold',
+    'Gate position deviation from learned norm',
+    'Multi-feature correlation anomaly',
+    'Gradual pressure creep — 6hr trend flagged',
+  ];
+
+  function runDrift() {
+    const zone   = pickRandom(zoneKeys);
+    const cfg    = ZONES[zone];
+    const signal = pickRandom(DRIFT_SIGNALS);
+
+    // Generate an out-of-distribution reading — valid signature, but anomalous values
+    let pressure, flow, gate;
+    const driftType = randInt(0, 2);
+    if (driftType === 0) {
+      // High pressure drift
+      pressure = rand(64, 78);
+      flow     = rand(...cfg.flow);
+      gate     = rand(...cfg.gate);
+    } else if (driftType === 1) {
+      // Low flow drift
+      pressure = rand(...cfg.pressure);
+      flow     = rand(18, 38);
+      gate     = rand(...cfg.gate);
+    } else {
+      // Multi-feature drift
+      pressure = rand(63, 72);
+      flow     = rand(20, 38);
+      gate     = rand(...cfg.gate);
+    }
+
+    const score = isolationForestScore(pressure, flow, gate);
+
+    // Update the zone card with drifted values (orange top bar)
+    updateZone(zone, pressure, flow, gate);
+    const z = el.zones[zone];
+    z.card.classList.add('anomaly-glow');
+    setTimeout(() => z.card.classList.remove('anomaly-glow'), ALERT_TTL_MS);
+
+    setAnomaly(
+      cfg.label,
+      `${signal} (${pressure.toFixed(1)} PSI, ${flow.toFixed(1)} LPM)`,
+      score
+    );
+    bumpAnomaly();
+
+    addLog('anomaly',
+      `<strong>AI Flag — ${cfg.label}</strong> &mdash; ${signal} &nbsp;<span style="opacity:.5;font-size:.7rem">score ${score.toFixed(4)}</span>`
+    );
+
+    // Schedule next drift randomly 15–60 seconds out
+    setTimeout(runDrift, randInt(15000, 60000));
   }
 
   /* ── Shake ──────────────────────────────────────────────── */
@@ -704,7 +866,6 @@
   }
 
   /* ── Boot sequence ──────────────────────────────────────── */
-  // Stagger first readings so all 3 zones come online fast
   setTimeout(() => sensorTick(), 800);
   setTimeout(() => sensorTick(), 1800);
   setTimeout(() => sensorTick(), 2800);
@@ -712,8 +873,11 @@
   // Normal sensor rhythm
   setInterval(sensorTick, SENSOR_TICK);
 
-  // First attack fires randomly between 5-10 seconds — fast enough to see immediately
+  // Attacks — first fires 5-10 seconds in
   setTimeout(runAttack, randInt(5000, 10000));
+
+  // AI drift detection — first fires 12-18 seconds in
+  setTimeout(runDrift, randInt(12000, 18000));
 </script>
 </body>
 </html>
